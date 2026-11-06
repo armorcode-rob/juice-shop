@@ -12,6 +12,33 @@ import * as utils from '../lib/utils'
 const security = require('../lib/insecurity')
 const request = require('request')
 
+const isValidImageUrl = (url: string): boolean => {
+  let parsed: URL
+  try {
+    parsed = new URL(url)
+  } catch (err) {
+    return false
+  }
+
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false
+
+  const hostname = parsed.hostname.toLowerCase()
+  if (
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname === '::1' ||
+    hostname === '0.0.0.0' ||
+    /^10\./.test(hostname) ||
+    /^192\.168\./.test(hostname) ||
+    /^172\.(1[6-9]|2\d|3[0-1])\./.test(hostname) ||
+    /^169\.254\./.test(hostname)
+  ) {
+    return false
+  }
+
+  return true
+}
+
 module.exports = function profileImageUrlUpload () {
   return (req: Request, res: Response, next: NextFunction) => {
     if (req.body.imageUrl !== undefined) {
@@ -19,6 +46,10 @@ module.exports = function profileImageUrlUpload () {
       if (url.match(/(.)*solve\/challenges\/server-side(.)*/) !== null) req.app.locals.abused_ssrf_bug = true
       const loggedInUser = security.authenticatedUsers.get(req.cookies.token)
       if (loggedInUser) {
+        if (!isValidImageUrl(url)) {
+          next(new Error('Invalid image url: ' + url))
+          return
+        }
         const imageRequest = request
           .get(url)
           .on('error', function (err: unknown) {
