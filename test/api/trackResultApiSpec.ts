@@ -4,6 +4,7 @@
  */
 
 import frisby = require('frisby')
+import { expect } from '@jest/globals'
 const Joi = frisby.Joi
 
 const REST_URL = 'http://localhost:3000/rest'
@@ -15,23 +16,17 @@ describe('/rest/track-order/:id', () => {
       .expect('json', {})
   })
 
-  it('GET all orders by injecting into orderId', () => {
-    const product = Joi.object().keys({
-      quantity: Joi.number(),
-      name: Joi.string(),
-      price: Joi.number(),
-      total: Joi.number()
-    })
+  it('GET injecting into orderId does not return other orders', () => {
     return frisby.get(REST_URL + '/track-order/%27%20%7C%7C%20true%20%7C%7C%20%27')
       .expect('status', 200)
       .expect('header', 'content-type', /application\/json/)
       .expect('jsonTypes', 'data.*', {
-        orderId: Joi.string(),
-        email: Joi.string(),
-        totalPrice: Joi.number(),
-        products: Joi.array().items(product),
-        eta: Joi.string(),
-        _id: Joi.string()
+        orderId: Joi.string()
+      })
+      .then(({ json }) => {
+        expect(json.data.length).toBe(1)
+        expect(json.data[0].email).toBeUndefined()
+        expect(json.data[0].products).toBeUndefined()
       })
   })
 })

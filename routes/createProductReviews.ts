@@ -16,8 +16,14 @@ module.exports = function productReviews () {
   return (req: Request, res: Response) => {
     const user = security.authenticatedUsers.from(req)
     challengeUtils.solveIf(challenges.forgedReviewChallenge, () => { return user && user.data.email !== req.body.author })
+    // Store the product id as a number so that reviews are found by the numeric equality filter in showProductReviews
+    const productId = Number(req.params.id)
+    if (!Number.isInteger(productId)) {
+      res.status(400).json({ error: 'Wrong Params' })
+      return
+    }
     reviewsCollection.insert({
-      product: req.params.id,
+      product: productId,
       message: req.body.message,
       author: req.body.author,
       likesCount: 0,

@@ -4,8 +4,6 @@
  */
 
 import frisby = require('frisby')
-import config from 'config'
-import { type Product } from '../../data/types'
 import { type IncomingMessage } from 'http'
 const Joi = frisby.Joi
 const security = require('../../lib/insecurity')
@@ -31,14 +29,12 @@ describe('/rest/products/:id/reviews', () => {
       .expect('jsonTypes', reviewResponseSchema)
   })
 
-  it('GET product reviews attack by injecting a mongoDB sleep command', () => {
+  it('GET product reviews rejects an injected mongoDB sleep command as product id', () => {
     return frisby.get(`${REST_URL}/products/sleep(1)/reviews`)
-      .expect('status', 200)
-      .expect('header', 'content-type', /application\/json/)
-      .expect('jsonTypes', reviewResponseSchema)
+      .expect('status', 400)
   })
 
-  xit('GET product reviews by alphanumeric non-mongoDB-command product id', () => { // FIXME Turn on when #1960 is resolved
+  it('GET product reviews by alphanumeric non-mongoDB-command product id', () => {
     return frisby.get(`${REST_URL}/products/kaboom/reviews`)
       .expect('status', 400)
   })
@@ -144,10 +140,7 @@ describe('/rest/products/reviews', () => {
       })
   })
 
-  it('PATCH multiple product review via injection', () => {
-    // Count all the reviews. (Count starts at one because of the review inserted by the other tests...)
-    const totalReviews = config.get<Product[]>('products').reduce((sum: number, { reviews = [] }: any) => sum + reviews.length, 1)
-
+  it('PATCH multiple product reviews via query operator injection is rejected', () => {
     return frisby.patch(`${REST_URL}/products/reviews`, {
       headers: authHeader,
       body: {
@@ -155,9 +148,26 @@ describe('/rest/products/reviews', () => {
         message: 'trololololololololololololololololololololololololololol'
       }
     })
+      .expect('status', 400)
+  })
+
+  it('POST liking a product review via query operator injection is rejected', () => {
+    return frisby.post(`${REST_URL}/user/login`, {
+      headers: jsonHeader,
+      body: {
+        email: 'bjoern.kimminich@gmail.com',
+        password: 'bW9jLmxpYW1nQGhjaW5pbW1pay5ucmVvamI='
+      }
+    })
       .expect('status', 200)
-      .expect('header', 'content-type', /application\/json/)
-      .expect('jsonTypes', updatedReviewResponseSchema)
-      .expect('json', { modified: totalReviews })
+      .then(({ json: jsonLogin }) => {
+        return frisby.post(`${REST_URL}/products/reviews`, {
+          headers: { Authorization: `Bearer ${jsonLogin.authentication.token}` },
+          body: {
+            id: { $ne: -1 }
+          }
+        })
+          .expect('status', 400)
+      })
   })
 })

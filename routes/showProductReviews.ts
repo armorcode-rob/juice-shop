@@ -12,26 +12,18 @@ import { challenges } from '../data/datacache'
 
 const security = require('../lib/insecurity')
 
-// Blocking sleep function as in native MongoDB
-// @ts-expect-error FIXME Type safety broken for global object
-global.sleep = (time: number) => {
-  // Ensure that users don't accidentally dos their servers for too long
-  if (time > 2000) {
-    time = 2000
-  }
-  const stop = new Date().getTime()
-  while (new Date().getTime() < stop + time) {
-    ;
-  }
-}
-
 module.exports = function productReviews () {
   return (req: Request, res: Response, next: NextFunction) => {
-    const id = !utils.isChallengeEnabled(challenges.noSqlCommandChallenge) ? Number(req.params.id) : req.params.id
+    // The product id must be a plain integer; it is used as an equality filter, never as query code
+    const id = Number(req.params.id)
+    if (!Number.isInteger(id)) {
+      res.status(400).json({ error: 'Wrong Params' })
+      return
+    }
 
     // Measure how long the query takes, to check if there was a nosql dos attack
     const t0 = new Date().getTime()
-    db.reviewsCollection.find({ $where: 'this.product == ' + id }).then((reviews: Review[]) => {
+    db.reviewsCollection.find({ product: id }).then((reviews: Review[]) => {
       const t1 = new Date().getTime()
       challengeUtils.solveIf(challenges.noSqlCommandChallenge, () => { return (t1 - t0) > 2000 })
       const user = security.authenticatedUsers.from(req)
