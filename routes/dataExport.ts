@@ -15,9 +15,9 @@ const security = require('../lib/insecurity')
 module.exports = function dataExport () {
   return async (req: Request, res: Response, next: NextFunction) => {
     const loggedInUser = security.authenticatedUsers.get(req.headers?.authorization?.replace('Bearer ', ''))
-    if (loggedInUser?.data?.email && loggedInUser.data.id) {
+    if (typeof loggedInUser?.data?.email === 'string' && loggedInUser.data.id) {
       const username = loggedInUser.data.username
-      const email = loggedInUser.data.email
+      const email: string = loggedInUser.data.email
       const updatedEmail = email.replace(/[aeiou]/gi, '*')
       const userData:
       {

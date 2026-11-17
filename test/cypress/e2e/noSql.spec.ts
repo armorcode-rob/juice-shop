@@ -3,7 +3,8 @@ describe('/rest/products/reviews', () => {
     cy.visit('/#/search')
   })
 
-  describe('challenge "NoSQL DoS"', () => {
+  // Skipped: the product id is validated as an integer and no longer evaluated as a $where expression
+  xdescribe('challenge "NoSQL DoS"', () => {
     beforeEach(() => {
       cy.login({ email: 'admin', password: 'admin123' })
     })
@@ -27,7 +28,8 @@ describe('/rest/products/reviews', () => {
     })
   })
 
-  describe('challenge "NoSQL Exfiltration"', () => {
+  // Skipped: the order id is matched with an equality filter and no longer evaluated as a $where expression
+  xdescribe('challenge "NoSQL Exfiltration"', () => {
     it('should be possible to inject and get all the orders', () => {
       cy.task('isDocker').then((isDocker) => {
         if (!isDocker) {
@@ -48,7 +50,8 @@ describe('/rest/products/reviews', () => {
     })
   })
 
-  describe('challenge "NoSQL Manipulation"', () => {
+  // Skipped: the review id must be a plain string, so query operators are rejected with 400
+  xdescribe('challenge "NoSQL Manipulation"', () => {
     beforeEach(() => {
       cy.login({ email: 'admin', password: 'admin123' })
     })

@@ -31,7 +31,8 @@ describe('/#/search', () => {
 })
 
 describe('/rest/products/search', () => {
-  describe('challenge "unionSqlInjection"', () => {
+  // Skipped: the search term is bound as a parameter, so UNION SELECT injection no longer works
+  xdescribe('challenge "unionSqlInjection"', () => {
     it('query param in product search endpoint should be susceptible to UNION SQL injection attacks', () => {
       cy.request(
         "/rest/products/search?q=')) union select id,'2','3',email,password,'6','7','8','9' from users--"
@@ -40,7 +41,8 @@ describe('/rest/products/search', () => {
     })
   })
 
-  describe('challenge "dbSchema"', () => {
+  // Skipped: the search term is bound as a parameter, so UNION SELECT injection no longer works
+  xdescribe('challenge "dbSchema"', () => {
     it('query param in product search endpoint should be susceptible to UNION SQL injection attacks', () => {
       cy.request(
         "/rest/products/search?q=')) union select sql,'2','3','4','5','6','7','8','9' from sqlite_master--"
@@ -49,7 +51,8 @@ describe('/rest/products/search', () => {
     })
   })
 
-  describe('challenge "dlpPastebinLeakChallenge"', () => {
+  // Skipped: this flow relied on commenting out the WHERE clause, which the parameterized search query no longer allows
+  xdescribe('challenge "dlpPastebinLeakChallenge"', () => {
     beforeEach(() => {
       cy.login({
         email: 'admin',

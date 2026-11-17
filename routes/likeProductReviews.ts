@@ -13,7 +13,12 @@ const security = require('../lib/insecurity')
 
 module.exports = function productReviews () {
   return (req: Request, res: Response, next: NextFunction) => {
-    const id = req.body.id
+    // Only accept a plain string id so that query operators (e.g. { $ne: ... }) cannot be injected
+    if (typeof req.body.id !== 'string' || req.body.id.length === 0) {
+      res.status(400).json({ error: 'Wrong Params' })
+      return
+    }
+    const id: string = req.body.id
     const user = security.authenticatedUsers.from(req)
     db.reviewsCollection.findOne({ _id: id }).then((review: Review) => {
       if (!review) {
